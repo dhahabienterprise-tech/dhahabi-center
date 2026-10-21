@@ -1434,6 +1434,10 @@
           <label>Margen de Utilidad (%)</label>
           <input type="number" id="cfg-utilidad">
         </div>
+        <div class="form-group" style="margin-top: 12px;">
+          <label>Comisión Retiro de Efectivo (%)</label>
+          <input type="number" step="0.01" id="cfg-retiro" placeholder="25">
+        </div>
         <div class="modal-footer" style="margin-top: 20px;">
           <button class="btn" style="width:100%; justify-content:center;" onclick="guardarConfiguracion()">Actualizar Parámetros</button>
         </div>
@@ -1638,7 +1642,7 @@
 
   <script>
     const URL_BASE_IMAGENES = "https://cdn.dhahabi.ae/images/productos/";
-    const API_URL = "https://script.google.com/macros/s/AKfycbxCsypbbZWKMzsU8CYSPlj9LVmzhkytgd1agMY-d2ovO4Y_QxZ5ZflHFNQPwJ5h3oXg/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbx48oFfgpLQci29udO-VZoIiZkKqaMGmcpKX4_lu8n7eDOSxGJtfrFlaS7rxW3Ak9qE4Q/exec";
     const LOGO_DARK_THEME = "https://cdn.dhahabi.ae/logo/dhahabi-market-logo-gradient-white.svg";
     const LOGO_LIGHT_THEME = "https://cdn.dhahabi.ae/logo/dhahabi-market-logo-gradient.svg";   
 
@@ -1774,11 +1778,12 @@
       let costoNum = parseFloat(costo) || 0;
       let utilidad = parseFloat(state.config.margenUtilidad) || 30;
       let tasa = parseFloat(state.config.tasaUSD) || 320;
+      let pctRetiro = (parseFloat(state.config.comisionRetiro) || 25) / 100;
       let costoUSD = moneda === 'CUP' ? costoNum / tasa : costoNum;
       
       // Margen de utilidad y aplicación del 25% de retiro de efectivo
       let precioConUtilidad = costoUSD * (1 + (utilidad / 100));
-      let precioFinalConRetiro = precioConUtilidad / (1 - 0.25);
+      let precioFinalConRetiro = precioConUtilidad / (1 - pctRetiro);
 
       return precioFinalConRetiro.toFixed(2);
     }
@@ -2090,7 +2095,8 @@
 
       state.config = {
         tasaUSD: parseFloat(keys['tasausd'] || keys['tasa'] || 320),
-        margenUtilidad: parseFloat(keys['margenutilidad'] || keys['utilidad'] || 30)
+        margenUtilidad: parseFloat(keys['margenutilidad'] || keys['utilidad'] || 30),
+        comisionRetiro: parseFloat(keys['comisionretiro'] || keys['retiro'] || 25)
       };
 
       state.productos = state.productos || [];
@@ -2108,7 +2114,7 @@
       if (document.getElementById('metric-tasa')) document.getElementById('metric-tasa').innerText = `1 USD = $${state.config.tasaUSD} CUP`;
       if (document.getElementById('metric-utilidad')) document.getElementById('metric-utilidad').innerText = `${state.config.margenUtilidad}%`;
       if (document.getElementById('metric-proveedores')) document.getElementById('metric-proveedores').innerText = state.proveedores.length;
-
+      if (document.getElementById('cfg-retiro')) document.getElementById('cfg-retiro').value = state.config.comisionRetiro;
       if (document.getElementById('cfg-tasa')) document.getElementById('cfg-tasa').value = state.config.tasaUSD;
       if (document.getElementById('cfg-utilidad')) document.getElementById('cfg-utilidad').value = state.config.margenUtilidad;
 
@@ -2336,9 +2342,11 @@
     async function guardarConfiguracion() {
       const tasaUSD = parseFloat(document.getElementById('cfg-tasa').value);
       const margenUtilidad = parseFloat(document.getElementById('cfg-utilidad').value);
-      
+      const comisionRetiro = parseFloat(document.getElementById('cfg-retiro').value);
+
       state.config.tasaUSD = tasaUSD;
       state.config.margenUtilidad = margenUtilidad;
+      state.config.comisionRetiro = comisionRetiro;
       renderApp();
       await APIRequest('updateConfig', { tasaUSD, margenUtilidad });
     }
